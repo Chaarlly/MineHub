@@ -6,6 +6,7 @@ import com.br.minehub.main.service.SftpService;
 import com.br.minehub.main.service.pterodactyl.PterodactylService;
 import com.br.minehub.main.service.pterodactyl.model.PteroServer;
 import com.br.minehub.main.service.pterodactyl.ws.PteroConsoleWebSocket;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.concurrent.Task;
@@ -58,6 +59,42 @@ public class MainController {
         statusLabel.setText("MineHub iniciado");
     }
 
+    private void downloadRemoteItem(RemoteFileItem item) {
+        javafx.stage.DirectoryChooser chooser = new javafx.stage.DirectoryChooser();
+        chooser.setTitle("Escolha onde salvar");
+
+        java.io.File selectedDir = chooser.showDialog(contentArea.getScene().getWindow());
+
+        if (selectedDir == null) {
+            return;
+        }
+
+        String remotePath = resolvePath(item.getName());
+
+        statusLabel.setText("Baixando " + item.getName() + "...");
+
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                sftpService.downloadPath(remotePath, selectedDir.toPath());
+                return null;
+            }
+        };
+
+        task.setOnSucceeded(e ->
+                statusLabel.setText("Download concluído: " + item.getName())
+        );
+
+        task.setOnFailed(e -> {
+            statusLabel.setText("Erro ao baixar: " + task.getException().getMessage());
+            task.getException().printStackTrace();
+        });
+
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
+    }
+
     @FXML
     private void showFiles() {
         VBox container = new VBox(12);
@@ -76,10 +113,17 @@ public class MainController {
         pathField.setEditable(false);
         pathField.setPrefWidth(600);
 
-        toolbar.getChildren().addAll(backButton, refreshButton, pathField);
+        ProgressBar uploadProgress = new ProgressBar(0);
+        uploadProgress.setPrefWidth(220);
+        uploadProgress.setVisible(false);
+
+        toolbar.getChildren().addAll(backButton, refreshButton, pathField, uploadProgress);
 
         TableView<RemoteFileItem> table = new TableView<>();
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+
+        setupUploadDragAndDrop(container, table, pathField, uploadProgress);
+        setupUploadDragAndDrop(table, table, pathField, uploadProgress);
 
         TableColumn<RemoteFileItem, String> nameColumn = new TableColumn<>("Nome");
         nameColumn.setCellValueFactory(cell ->
@@ -140,11 +184,14 @@ public class MainController {
         table.setRowFactory(tv -> {
             TableRow<RemoteFileItem> row = new TableRow<>();
 
+            // Duplo clique
             row.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 2 && !row.isEmpty()) {
+
                     RemoteFileItem item = row.getItem();
 
                     if (item.isDirectory()) {
+
                         currentPath = currentPath.equals("/")
                                 ? "/" + item.getName()
                                 : currentPath + "/" + item.getName();
@@ -153,13 +200,50 @@ public class MainController {
                         loadFiles(table, pathField);
 
                     } else if (isEditableFile(item)) {
+
                         openEditor(item);
 
                     } else {
+
                         statusLabel.setText("Esse tipo de arquivo ainda não pode ser editado.");
+
                     }
                 }
             });
+
+            // ===========================
+            // MENU BOTÃO DIREITO
+            // ===========================
+
+            ContextMenu menu = new ContextMenu();
+
+            MenuItem downloadItem = new MenuItem("📥 Baixar para...");
+            downloadItem.setOnAction(e -> {
+                RemoteFileItem item = row.getItem();
+
+                if (item != null) {
+                    downloadRemoteItem(item);
+                }
+            });
+
+            MenuItem renameItem = new MenuItem("✏ Renomear");
+            renameItem.setDisable(true); // implementar depois
+
+            MenuItem deleteItem = new MenuItem("🗑 Excluir");
+            deleteItem.setDisable(true); // implementar depois
+
+            menu.getItems().addAll(
+                    downloadItem,
+                    new SeparatorMenuItem(),
+                    renameItem,
+                    deleteItem
+            );
+
+            row.contextMenuProperty().bind(
+                    Bindings.when(row.emptyProperty())
+                            .then((ContextMenu) null)
+                            .otherwise(menu)
+            );
 
             return row;
         });
@@ -171,6 +255,92 @@ public class MainController {
         } else {
             statusLabel.setText("Conecte primeiro em Configurações.");
         }
+    }
+
+    private void setupUploadDragAndDrop(
+            javafx.scene.Node dropTarget,
+            TableView<RemoteFileItem> table,
+            TextField pathField,
+            ProgressBar uploadProgress
+    ) {
+        dropTarget.setOnDragOver(event -> {
+            if (event.getDragboard().hasFiles() && sftpService.isConnected()) {
+                event.acceptTransferModes(javafx.scene.input.TransferMode.COPY);
+            }
+            event.consume();
+        });
+
+        dropTarget.setOnDragDropped(event -> {
+            var dragboard = event.getDragboard();
+
+            if (!dragboard.hasFiles()) {
+                event.setDropCompleted(false);
+                event.consume();
+                return;
+            }
+
+            java.util.List<java.io.File> droppedFiles =
+                    new java.util.ArrayList<>(dragboard.getFiles());
+
+            Task<Void> uploadTask = new Task<>() {
+                @Override
+                protected Void call() throws Exception {
+                    int total = droppedFiles.size();
+
+                    for (int i = 0; i < total; i++) {
+                        java.io.File file = droppedFiles.get(i);
+
+                        updateMessage("Enviando " + file.getName() + " (" + (i + 1) + "/" + total + ")");
+                        updateProgress(i, total);
+
+                        sftpService.uploadPath(file.toPath(), currentPath);
+
+                        updateProgress(i + 1, total);
+                    }
+
+                    return null;
+                }
+            };
+
+            uploadProgress.setVisible(true);
+            uploadProgress.progressProperty().bind(uploadTask.progressProperty());
+            statusLabel.textProperty().bind(uploadTask.messageProperty());
+
+            uploadTask.setOnSucceeded(e -> {
+                uploadProgress.progressProperty().unbind();
+                statusLabel.textProperty().unbind();
+
+                uploadProgress.setProgress(0);
+                uploadProgress.setVisible(false);
+
+                statusLabel.setText("Upload concluído.");
+                loadFiles(table, pathField);
+
+                javafx.animation.PauseTransition pause =
+                        new javafx.animation.PauseTransition(javafx.util.Duration.seconds(2.5));
+
+                pause.setOnFinished(ev -> statusLabel.setText("Tela: Arquivos"));
+                pause.play();
+            });
+
+            uploadTask.setOnFailed(e -> {
+                uploadProgress.progressProperty().unbind();
+                statusLabel.textProperty().unbind();
+
+                uploadProgress.setProgress(0);
+                uploadProgress.setVisible(false);
+
+                statusLabel.setText("Erro no upload: " + uploadTask.getException().getMessage());
+                uploadTask.getException().printStackTrace();
+            });
+
+            Thread thread = new Thread(uploadTask);
+            thread.setDaemon(true);
+            thread.start();
+
+            event.setDropCompleted(true);
+            event.consume();
+        });
     }
 
     private void loadFiles(TableView<RemoteFileItem> table, TextField pathField) {

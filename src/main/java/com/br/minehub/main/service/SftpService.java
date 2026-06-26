@@ -111,4 +111,103 @@ public class SftpService {
         if (sftp != null) sftp.close();
         if (ssh != null) ssh.disconnect();
     }
+
+    public void uploadPath(Path localPath, String remoteDir) throws IOException {
+        if (Files.isDirectory(localPath)) {
+            uploadDirectory(localPath, remoteDir);
+        } else {
+            uploadFile(localPath, remoteDir);
+        }
+    }
+
+    private void uploadFile(Path localFile, String remoteDir) throws IOException {
+        String remotePath = remoteDir.equals("/")
+                ? "/" + localFile.getFileName()
+                : remoteDir + "/" + localFile.getFileName();
+
+        sftp.put(localFile.toString(), remotePath);
+    }
+
+    private void uploadDirectory(Path localDir, String remoteDir) throws IOException {
+        String remoteFolder = remoteDir.equals("/")
+                ? "/" + localDir.getFileName()
+                : remoteDir + "/" + localDir.getFileName();
+
+        try {
+            sftp.mkdir(remoteFolder);
+        } catch (Exception ignored) {
+        }
+
+        try (var stream = Files.list(localDir)) {
+            for (Path child : stream.toList()) {
+                uploadPath(child, remoteFolder);
+            }
+        }
+    }
+
+    public void downloadPath(String remotePath, Path localDir) throws IOException {
+        RemoteResourceInfo found = null;
+
+        String parent = remotePath.contains("/")
+                ? remotePath.substring(0, remotePath.lastIndexOf("/"))
+                : "/";
+
+        if (parent.isBlank()) {
+            parent = "/";
+        }
+
+        String targetName = remotePath.substring(remotePath.lastIndexOf("/") + 1);
+
+        for (RemoteResourceInfo info : sftp.ls(parent)) {
+            if (info.getName().equals(targetName)) {
+                found = info;
+                break;
+            }
+        }
+
+        if (found == null) {
+            throw new IOException("Arquivo remoto não encontrado: " + remotePath);
+        }
+
+        if (found.isDirectory()) {
+            downloadDirectory(remotePath, localDir);
+        } else {
+            downloadFile(remotePath, localDir);
+        }
+    }
+
+    private void downloadFile(String remoteFile, Path localDir) throws IOException {
+        Files.createDirectories(localDir);
+
+        String fileName = remoteFile.substring(remoteFile.lastIndexOf("/") + 1);
+        Path localFile = localDir.resolve(fileName);
+
+        sftp.get(remoteFile, localFile.toString());
+    }
+
+    private void downloadDirectory(String remoteDir, Path localParentDir) throws IOException {
+        String folderName = remoteDir.substring(remoteDir.lastIndexOf("/") + 1);
+        Path localDir = localParentDir.resolve(folderName);
+
+        Files.createDirectories(localDir);
+
+        for (var info : sftp.ls(remoteDir)) {
+            String name = info.getName();
+
+            if (name.equals(".") || name.equals("..")) {
+                continue;
+            }
+
+            String childRemote = remoteDir.equals("/")
+                    ? "/" + name
+                    : remoteDir + "/" + name;
+
+            if (info.isDirectory()) {
+                downloadDirectory(childRemote, localDir);
+            } else {
+                downloadFile(childRemote, localDir);
+            }
+        }
+    }
+
 }
