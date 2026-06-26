@@ -314,12 +314,35 @@ public class MainController {
     }
 
     @FXML
-    private void showConsole() {
-        VBox box = new VBox(10);
+    private void showTerminal() {
+        VBox box = new VBox(12);
         box.getStyleClass().add("card");
 
-        Label title = new Label("Console do Servidor");
-        title.setStyle("-fx-font-size:20px; -fx-font-weight:bold;");
+        Label title = new Label("Terminal do Servidor");
+        title.getStyleClass().add("page-title");
+
+        HBox powerButtons = new HBox(10);
+
+        Button startButton = new Button("▶ Iniciar");
+        startButton.getStyleClass().add("success-button");
+
+        Button restartButton = new Button("↻ Reiniciar");
+
+        Button stopButton = new Button("■ Parar");
+        stopButton.getStyleClass().add("danger-button");
+
+        Button killButton = new Button("✖ Kill");
+        killButton.getStyleClass().add("danger-button");
+
+        Button reconnectButton = new Button("Reconectar Console");
+
+        powerButtons.getChildren().addAll(
+                startButton,
+                restartButton,
+                stopButton,
+                killButton,
+                reconnectButton
+        );
 
         TextArea console = new TextArea();
         console.setEditable(false);
@@ -330,10 +353,16 @@ public class MainController {
         commandField.setPromptText("Digite um comando. Ex: say Olá mundo");
 
         Button sendButton = new Button("Enviar");
-        Button reconnectButton = new Button("Reconectar Console");
+        sendButton.getStyleClass().add("primary-button");
 
-        HBox commandBox = new HBox(10, commandField, sendButton, reconnectButton);
-        commandField.setPrefWidth(650);
+        HBox commandBox = new HBox(10, commandField, sendButton);
+        commandField.setPrefWidth(720);
+
+        startButton.setOnAction(e -> runPowerAction("start", console));
+        stopButton.setOnAction(e -> runPowerAction("stop", console));
+        restartButton.setOnAction(e -> runPowerAction("restart", console));
+        killButton.setOnAction(e -> runPowerAction("kill", console));
+        reconnectButton.setOnAction(e -> connectConsoleWebSocket(console));
 
         sendButton.setOnAction(e -> {
             String command = commandField.getText().trim();
@@ -346,45 +375,17 @@ public class MainController {
             commandField.clear();
         });
 
-        reconnectButton.setOnAction(e -> connectConsoleWebSocket(console));
+        box.getChildren().addAll(
+                title,
+                powerButtons,
+                console,
+                commandBox
+        );
 
-        box.getChildren().addAll(title, console, commandBox);
         contentArea.getChildren().setAll(box);
-        statusLabel.setText("Tela: Console");
+        statusLabel.setText("Tela: Terminal");
 
         connectConsoleWebSocket(console);
-    }
-
-    @FXML
-    private void showServer() {
-        VBox box = new VBox(15);
-        box.getStyleClass().add("card");
-
-        Label title = new Label("Gerenciamento do Servidor");
-        title.setStyle("-fx-font-size:20px; -fx-font-weight:bold;");
-
-        Button startButton = new Button("▶ Iniciar");
-        Button stopButton = new Button("■ Parar");
-        Button restartButton = new Button("↻ Reiniciar");
-        Button killButton = new Button("✖ Kill");
-        Button resourcesButton = new Button("Atualizar Status");
-
-        HBox buttons = new HBox(10, startButton, stopButton, restartButton, killButton, resourcesButton);
-
-        TextArea output = new TextArea();
-        output.setEditable(false);
-        output.setPrefHeight(350);
-
-        startButton.setOnAction(e -> runPowerAction("start", output));
-        stopButton.setOnAction(e -> runPowerAction("stop", output));
-        restartButton.setOnAction(e -> runPowerAction("restart", output));
-        killButton.setOnAction(e -> runPowerAction("kill", output));
-        resourcesButton.setOnAction(e -> loadServerResources(output));
-
-        box.getChildren().addAll(title, buttons, output);
-
-        contentArea.getChildren().setAll(box);
-        statusLabel.setText("Tela: Servidor");
     }
 
     @FXML

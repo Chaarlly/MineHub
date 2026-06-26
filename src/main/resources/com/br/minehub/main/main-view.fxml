@@ -14,8 +14,7 @@
             <Separator/>
 
             <Button text="Arquivos" onAction="#showFiles" styleClass="nav-button"/>
-            <Button text="Console" onAction="#showConsole" styleClass="nav-button"/>
-            <Button text="Servidor" onAction="#showServer" styleClass="nav-button"/>
+            <Button text="Terminal" onAction="#showTerminal" styleClass="nav-button"/>
             <Button text="Configurações" onAction="#showSettings" styleClass="nav-button"/>
         </VBox>
     </left>
