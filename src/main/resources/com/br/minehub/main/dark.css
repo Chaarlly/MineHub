@@ -349,3 +349,37 @@
     -fx-fill: #fb7185;
     -fx-font-weight: bold;
 }
+
+/* TITLE BAR */
+.title-bar {
+    -fx-background-color: #080d18;
+    -fx-padding: 8 12;
+    -fx-border-color: #1f2937;
+    -fx-border-width: 0 0 1 0;
+}
+
+.title-app-name {
+    -fx-text-fill: #f9fafb;
+    -fx-font-size: 13px;
+    -fx-font-weight: 800;
+}
+
+.window-button,
+.window-button-close {
+    -fx-background-color: transparent;
+    -fx-text-fill: #9ca3af;
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-padding: 4 10;
+    -fx-background-radius: 6;
+}
+
+.window-button:hover {
+    -fx-background-color: #1f2937;
+    -fx-text-fill: white;
+}
+
+.window-button-close:hover {
+    -fx-background-color: #dc2626;
+    -fx-text-fill: white;
+}

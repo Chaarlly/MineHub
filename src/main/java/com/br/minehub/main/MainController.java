@@ -13,12 +13,20 @@ import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.DirectoryChooser;
+import javafx.stage.Stage;
 import org.kordamp.ikonli.fontawesome5.FontAwesomeSolid;
 import org.kordamp.ikonli.javafx.FontIcon;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainController {
 
@@ -26,18 +34,27 @@ public class MainController {
     private final SftpService sftpService = new SftpService();
     private PteroConsoleWebSocket consoleSocket;
     private String currentPath = "/";
+    private double xOffset;
+    private double yOffset;
 
     @FXML
-    private StackPane contentArea;
+    private HBox titleBar;
 
     @FXML
     private ComboBox<PteroServer> serverSelector;
+
+    @FXML
+    private ProgressBar uploadProgress;
+
+    @FXML
+    private StackPane contentArea;
 
     @FXML
     private Label statusLabel;
 
     @FXML
     public void initialize() {
+        setupWindowDrag();
         serverSelector.setDisable(true);
 
         serverSelector.setOnAction(e -> {
@@ -50,13 +67,13 @@ public class MainController {
             pteroService.selectServer(server.getIdentifier());
             currentPath = "/";
 
-            statusLabel.setText("Servidor selecionado: " + server.getName());
+            setStatus("Servidor selecionado: " + server.getName());
 
             showFiles();
         });
 
         showFiles();
-        statusLabel.setText("MineHub iniciado");
+        setStatus("MineHub iniciado");
     }
 
     private void downloadRemoteItem(RemoteFileItem item) {
@@ -71,7 +88,7 @@ public class MainController {
 
         String remotePath = resolvePath(item.getName());
 
-        statusLabel.setText("Baixando " + item.getName() + "...");
+        setStatus("Baixando " + item.getName() + "...");
 
         Task<Void> task = new Task<>() {
             @Override
@@ -82,11 +99,11 @@ public class MainController {
         };
 
         task.setOnSucceeded(e ->
-                statusLabel.setText("Download concluído: " + item.getName())
+                setStatus("Download concluído: " + item.getName())
         );
 
         task.setOnFailed(e -> {
-            statusLabel.setText("Erro ao baixar: " + task.getException().getMessage());
+            setStatus("Erro ao baixar: " + task.getException().getMessage());
             task.getException().printStackTrace();
         });
 
@@ -121,6 +138,44 @@ public class MainController {
 
         TableView<RemoteFileItem> table = new TableView<>();
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+
+        table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+        table.setOnKeyPressed(event -> {
+            if (event.isControlDown() && event.getCode() == KeyCode.A) {
+                table.getSelectionModel().selectAll();
+                event.consume();
+            }
+
+            if (event.getCode() == KeyCode.BACK_SPACE) {
+                if (!currentPath.equals("/")) {
+                    int lastSlash = currentPath.lastIndexOf("/");
+                    currentPath = lastSlash <= 0 ? "/" : currentPath.substring(0, lastSlash);
+                    pathField.setText(currentPath);
+                    loadFiles(table, pathField);
+                }
+                event.consume();
+            }
+
+            if (event.isControlDown() && event.getCode() == KeyCode.R) {
+                loadFiles(table, pathField);
+                event.consume();
+            }
+        });
+
+        setupUploadDragAndDrop(container, table, pathField, uploadProgress);
+        setupUploadDragAndDrop(table, table, pathField, uploadProgress);
+
+// Permite selecionar vários arquivos
+        table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+// Ctrl + A = selecionar tudo
+        table.setOnKeyPressed(event -> {
+            if (event.isControlDown() && event.getCode() == KeyCode.A) {
+                table.getSelectionModel().selectAll();
+                event.consume();
+            }
+        });
 
         setupUploadDragAndDrop(container, table, pathField, uploadProgress);
         setupUploadDragAndDrop(table, table, pathField, uploadProgress);
@@ -205,7 +260,7 @@ public class MainController {
 
                     } else {
 
-                        statusLabel.setText("Esse tipo de arquivo ainda não pode ser editado.");
+                        setStatus("Esse tipo de arquivo ainda não pode ser editado.");
 
                     }
                 }
@@ -222,7 +277,7 @@ public class MainController {
                 RemoteFileItem item = row.getItem();
 
                 if (item != null) {
-                    downloadRemoteItem(item);
+                    downloadSelectedItems(table);
                 }
             });
 
@@ -248,12 +303,12 @@ public class MainController {
             return row;
         });
 
-        statusLabel.setText("Tela: Arquivos");
+        setStatus("Tela: Arquivos");
 
         if (sftpService.isConnected()) {
             loadFiles(table, pathField);
         } else {
-            statusLabel.setText("Conecte primeiro em Configurações.");
+            setStatus("Conecte primeiro em Configurações.");
         }
     }
 
@@ -313,13 +368,13 @@ public class MainController {
                 uploadProgress.setProgress(0);
                 uploadProgress.setVisible(false);
 
-                statusLabel.setText("Upload concluído.");
+                setStatus("Upload concluído.");
                 loadFiles(table, pathField);
 
                 javafx.animation.PauseTransition pause =
                         new javafx.animation.PauseTransition(javafx.util.Duration.seconds(2.5));
 
-                pause.setOnFinished(ev -> statusLabel.setText("Tela: Arquivos"));
+                pause.setOnFinished(ev -> setStatus("Tela: Arquivos"));
                 pause.play();
             });
 
@@ -330,7 +385,7 @@ public class MainController {
                 uploadProgress.setProgress(0);
                 uploadProgress.setVisible(false);
 
-                statusLabel.setText("Erro no upload: " + uploadTask.getException().getMessage());
+                setStatus("Erro no upload: " + uploadTask.getException().getMessage());
                 uploadTask.getException().printStackTrace();
             });
 
@@ -344,7 +399,7 @@ public class MainController {
     }
 
     private void loadFiles(TableView<RemoteFileItem> table, TextField pathField) {
-        statusLabel.setText("Carregando arquivos de " + currentPath + "...");
+        setStatus("Carregando arquivos de " + currentPath + "...");
 
         Task<java.util.List<RemoteFileItem>> task = new Task<>() {
             @Override
@@ -356,11 +411,11 @@ public class MainController {
         task.setOnSucceeded(e -> {
             table.setItems(FXCollections.observableArrayList(task.getValue()));
             pathField.setText(currentPath);
-            statusLabel.setText("Arquivos carregados: " + task.getValue().size());
+            setStatus("Arquivos carregados: " + task.getValue().size());
         });
 
         task.setOnFailed(e -> {
-            statusLabel.setText("Erro ao listar arquivos: " + task.getException().getMessage());
+            setStatus("Erro ao listar arquivos: " + task.getException().getMessage());
             task.getException().printStackTrace();
         });
 
@@ -456,7 +511,7 @@ public class MainController {
         box.getChildren().addAll(toolbar, editor);
         contentArea.getChildren().setAll(box);
 
-        statusLabel.setText("Abrindo arquivo " + remotePath + "...");
+        setStatus("Abrindo arquivo " + remotePath + "...");
 
         Task<String> loadTask = new Task<>() {
             @Override
@@ -468,11 +523,11 @@ public class MainController {
         loadTask.setOnSucceeded(e -> {
             editor.setText(loadTask.getValue());
             editor.requestEditorFocus();
-            statusLabel.setText("Arquivo aberto: " + item.getName());
+            setStatus("Arquivo aberto: " + item.getName());
         });
 
         loadTask.setOnFailed(e -> {
-            statusLabel.setText("Erro ao abrir: " + loadTask.getException().getMessage());
+            setStatus("Erro ao abrir: " + loadTask.getException().getMessage());
             loadTask.getException().printStackTrace();
         });
 
@@ -481,7 +536,7 @@ public class MainController {
         loadThread.start();
 
         saveButton.setOnAction(e -> {
-            statusLabel.setText("Salvando " + item.getName() + "...");
+            setStatus("Salvando " + item.getName() + "...");
 
             Task<Void> saveTask = new Task<>() {
                 @Override
@@ -492,11 +547,11 @@ public class MainController {
             };
 
             saveTask.setOnSucceeded(ev ->
-                    statusLabel.setText("Arquivo salvo com sucesso: " + item.getName())
+                    setStatus("Arquivo salvo com sucesso: " + item.getName())
             );
 
             saveTask.setOnFailed(ev -> {
-                statusLabel.setText("Erro ao salvar: " + saveTask.getException().getMessage());
+                setStatus("Erro ao salvar: " + saveTask.getException().getMessage());
                 saveTask.getException().printStackTrace();
             });
 
@@ -578,7 +633,7 @@ public class MainController {
         );
 
         contentArea.getChildren().setAll(box);
-        statusLabel.setText("Tela: Terminal");
+        setStatus("Tela: Terminal");
 
         connectConsoleWebSocket(console);
     }
@@ -625,12 +680,12 @@ public class MainController {
             String apiKey = apiKeyField.getText().trim();
 
             if (host.isEmpty() || portText.isEmpty() || user.isEmpty() || password.isEmpty()) {
-                statusLabel.setText("Preencha host, porta, usuário e senha SFTP.");
+                setStatus("Preencha host, porta, usuário e senha SFTP.");
                 return;
             }
 
             if (panelUrl.isEmpty() || apiKey.isEmpty()) {
-                statusLabel.setText("Preencha a URL e a API Key do Pterodactyl.");
+                setStatus("Preencha a URL e a API Key do Pterodactyl.");
                 return;
             }
             int port;
@@ -638,13 +693,13 @@ public class MainController {
             try {
                 port = Integer.parseInt(portText);
             } catch (NumberFormatException ex) {
-                statusLabel.setText("Porta inválida.");
+                setStatus("Porta inválida.");
                 return;
             }
 
             pteroService.configure(panelUrl, apiKey, "");
 
-            statusLabel.setText("Conectando em " + host + ":" + port + "...");
+            setStatus("Conectando em " + host + ":" + port + "...");
             connectButton.setDisable(true);
 
             try {
@@ -666,7 +721,7 @@ public class MainController {
                 connectButton.setDisable(false);
 
                 if (!task.getValue()) {
-                    statusLabel.setText("Falha ao conectar SFTP.");
+                    setStatus("Falha ao conectar SFTP.");
                     return;
                 }
 
@@ -676,7 +731,7 @@ public class MainController {
                     serverSelector.getItems().setAll(servers);
 
                     if (servers.isEmpty()) {
-                        statusLabel.setText("Conectado, mas nenhum servidor foi encontrado.");
+                        setStatus("Conectado, mas nenhum servidor foi encontrado.");
                         return;
                     }
 
@@ -689,19 +744,19 @@ public class MainController {
 
                     currentPath = "/";
 
-                    statusLabel.setText("Conectado. Servidor: " + selected.getName());
+                    setStatus("Conectado. Servidor: " + selected.getName());
 
                     showFiles();
 
                 } catch (Exception ex) {
-                    statusLabel.setText("Erro ao carregar servidores.");
+                    setStatus("Erro ao carregar servidores.");
                     ex.printStackTrace();
                 }
             });
 
             task.setOnFailed(event -> {
                 connectButton.setDisable(false);
-                statusLabel.setText("Erro: " + task.getException().getMessage());
+                setStatus("Erro: " + task.getException().getMessage());
                 task.getException().printStackTrace();
             });
 
@@ -723,16 +778,16 @@ public class MainController {
         );
 
         contentArea.getChildren().setAll(box);
-        statusLabel.setText("Tela: Configurações");
+        setStatus("Tela: Configurações");
     }
 
     private void runPowerAction(String action, TextArea output) {
         if (!pteroService.isConfigured()) {
-            statusLabel.setText("Configure a API do Pterodactyl primeiro.");
+            setStatus("Configure a API do Pterodactyl primeiro.");
             return;
         }
 
-        statusLabel.setText("Enviando ação: " + action);
+        setStatus("Enviando ação: " + action);
 
         Task<String> task = new Task<>() {
             @Override
@@ -743,12 +798,12 @@ public class MainController {
 
         task.setOnSucceeded(e -> {
             output.appendText("Ação enviada: " + action + "\n");
-            statusLabel.setText("Comando enviado: " + action);
+            setStatus("Comando enviado: " + action);
         });
 
         task.setOnFailed(e -> {
             output.appendText("Erro: " + task.getException().getMessage() + "\n");
-            statusLabel.setText("Erro no Pterodactyl.");
+            setStatus("Erro no Pterodactyl.");
             task.getException().printStackTrace();
         });
 
@@ -759,7 +814,7 @@ public class MainController {
 
     private void sendConsoleCommand(String command, TextArea console) {
         if (!pteroService.isConfigured()) {
-            statusLabel.setText("Configure a API do Pterodactyl primeiro.");
+            setStatus("Configure a API do Pterodactyl primeiro.");
             return;
         }
 
@@ -774,12 +829,12 @@ public class MainController {
 
         task.setOnSucceeded(e -> {
             console.appendText("Comando enviado com sucesso.\n");
-            statusLabel.setText("Comando enviado.");
+            setStatus("Comando enviado.");
         });
 
         task.setOnFailed(e -> {
             console.appendText("Erro: " + task.getException().getMessage() + "\n");
-            statusLabel.setText("Erro ao enviar comando.");
+            setStatus("Erro ao enviar comando.");
             task.getException().printStackTrace();
         });
 
@@ -790,11 +845,11 @@ public class MainController {
 
     private void loadServerResources(TextArea output) {
         if (!pteroService.isConfigured()) {
-            statusLabel.setText("Configure a API do Pterodactyl primeiro.");
+            setStatus("Configure a API do Pterodactyl primeiro.");
             return;
         }
 
-        statusLabel.setText("Buscando recursos do servidor...");
+        setStatus("Buscando recursos do servidor...");
 
         Task<String> task = new Task<>() {
             @Override
@@ -805,12 +860,12 @@ public class MainController {
 
         task.setOnSucceeded(e -> {
             output.appendText("Resources:\n" + task.getValue() + "\n\n");
-            statusLabel.setText("Recursos carregados.");
+            setStatus("Recursos carregados.");
         });
 
         task.setOnFailed(e -> {
             output.appendText("Erro: " + task.getException().getMessage() + "\n");
-            statusLabel.setText("Erro ao buscar recursos.");
+            setStatus("Erro ao buscar recursos.");
             task.getException().printStackTrace();
         });
 
@@ -822,7 +877,7 @@ public class MainController {
     private void connectConsoleWebSocket(TextArea console) {
         if (!pteroService.isConfigured()) {
             console.appendText("Configure a API do Pterodactyl primeiro.\n");
-            statusLabel.setText("Configure a API do Pterodactyl primeiro.");
+            setStatus("Configure a API do Pterodactyl primeiro.");
             return;
         }
 
@@ -850,19 +905,187 @@ public class MainController {
 
                 consoleSocket.connect();
 
-                statusLabel.setText("Console conectado.");
+                setStatus("Console conectado.");
 
             } catch (Exception ex) {
                 console.appendText("Erro ao conectar WebSocket: " + ex.getMessage() + "\n");
-                statusLabel.setText("Erro ao conectar console.");
+                setStatus("Erro ao conectar console.");
                 ex.printStackTrace();
             }
         });
 
         task.setOnFailed(e -> {
             console.appendText("Erro ao obter WebSocket: " + task.getException().getMessage() + "\n");
-            statusLabel.setText("Erro ao obter WebSocket.");
+            setStatus("Erro ao obter WebSocket.");
             task.getException().printStackTrace();
+        });
+
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+
+
+    private void setupWindowDrag() {
+        titleBar.setOnMousePressed((MouseEvent event) -> {
+            Stage stage = (Stage) titleBar.getScene().getWindow();
+            xOffset = stage.getX() - event.getScreenX();
+            yOffset = stage.getY() - event.getScreenY();
+        });
+
+        titleBar.setOnMouseDragged((MouseEvent event) -> {
+            Stage stage = (Stage) titleBar.getScene().getWindow();
+
+            if (!stage.isMaximized()) {
+                stage.setX(event.getScreenX() + xOffset);
+                stage.setY(event.getScreenY() + yOffset);
+            }
+        });
+
+        titleBar.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2) {
+                maximizeWindow();
+            }
+        });
+    }
+
+    @FXML
+    private void minimizeWindow() {
+        Stage stage = (Stage) contentArea.getScene().getWindow();
+        stage.setIconified(true);
+    }
+
+    @FXML
+    private void maximizeWindow() {
+        Stage stage = (Stage) contentArea.getScene().getWindow();
+        stage.setMaximized(!stage.isMaximized());
+    }
+
+    @FXML
+    private void closeWindow() {
+        Stage stage = (Stage) contentArea.getScene().getWindow();
+        stage.close();
+    }
+
+    @FXML
+    private void refreshServerList() {
+        if (pteroService == null || pteroService.getPanelUrl() == null || pteroService.getPanelUrl().isBlank()) {
+            setStatus("Configure a API do Pterodactyl primeiro.");
+            return;
+        }
+
+        setStatus("Atualizando lista de servidores...");
+
+        Task<java.util.List<PteroServer>> task = new Task<>() {
+            @Override
+            protected java.util.List<PteroServer> call() throws Exception {
+                return pteroService.listServers();
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            serverSelector.getItems().setAll(task.getValue());
+
+            if (!task.getValue().isEmpty()) {
+                serverSelector.getSelectionModel().selectFirst();
+                PteroServer selected = serverSelector.getValue();
+                pteroService.selectServer(selected.getIdentifier());
+                serverSelector.setDisable(false);
+                currentPath = "/";
+                setStatus("Servidor selecionado: " + selected.getName());
+                showFiles();
+            } else {
+                setStatus("Nenhum servidor encontrado.");
+            }
+        });
+
+        task.setOnFailed(e -> {
+            setStatus("Erro ao atualizar servidores.");
+            task.getException().printStackTrace();
+        });
+
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    private void setStatus(String text) {
+        if (statusLabel.textProperty().isBound()) {
+            statusLabel.textProperty().unbind();
+        }
+
+        statusLabel.setText(text);
+    }
+
+    private void downloadSelectedItems(TableView<RemoteFileItem> table) {
+
+        List<RemoteFileItem> selected =
+                new ArrayList<>(table.getSelectionModel().getSelectedItems());
+
+        if (selected.isEmpty()) {
+            return;
+        }
+
+        DirectoryChooser chooser = new DirectoryChooser();
+        chooser.setTitle("Escolha onde salvar");
+
+        File destination = chooser.showDialog(contentArea.getScene().getWindow());
+
+        if (destination == null) {
+            return;
+        }
+
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+
+                int total = selected.size();
+
+                for (int i = 0; i < total; i++) {
+
+                    RemoteFileItem item = selected.get(i);
+
+                    updateMessage("Baixando " + item.getName());
+
+                    String remotePath = resolvePath(item.getName());
+
+                    sftpService.downloadPath(remotePath, destination.toPath());
+
+                    updateProgress(i + 1, total);
+                }
+
+                return null;
+            }
+        };
+
+        uploadProgress.setVisible(true);
+        uploadProgress.progressProperty().bind(task.progressProperty());
+
+        statusLabel.textProperty().bind(task.messageProperty());
+
+        task.setOnSucceeded(e -> {
+
+            uploadProgress.progressProperty().unbind();
+            statusLabel.textProperty().unbind();
+
+            uploadProgress.setVisible(false);
+
+            setStatus("Download concluído.");
+
+        });
+
+        task.setOnFailed(e -> {
+
+            uploadProgress.progressProperty().unbind();
+            statusLabel.textProperty().unbind();
+
+            uploadProgress.setVisible(false);
+
+            setStatus("Erro ao baixar.");
+
+            task.getException().printStackTrace();
+
         });
 
         Thread thread = new Thread(task);

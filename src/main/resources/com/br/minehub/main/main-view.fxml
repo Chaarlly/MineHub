@@ -1,44 +1,180 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml"
+<BorderPane xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.br.minehub.main.MainController"
             styleClass="app-bg">
 
+    <!-- ========================= -->
+    <!-- TOPO -->
+    <!-- ========================= -->
+
     <top>
-        <HBox styleClass="topbar" spacing="10">
-            <Pane HBox.hgrow="ALWAYS"/>
 
-            <Label text="Servidor:" styleClass="muted-text"/>
+        <VBox>
 
-            <ComboBox fx:id="serverSelector"
-                      prefWidth="260"
-                      promptText="Nenhum servidor"/>
-        </HBox>
+            <!-- Barra da Janela -->
+
+            <HBox fx:id="titleBar"
+                  styleClass="title-bar"
+                  alignment="CENTER_LEFT"
+                  spacing="10">
+
+                <padding>
+                    <Insets top="8" right="12" bottom="8" left="12"/>
+                </padding>
+
+                <Label text="⬢ MineHub"
+                       styleClass="title-app-name"/>
+
+                <Pane HBox.hgrow="ALWAYS"/>
+
+                <Button text="🗕"
+                        styleClass="window-button"
+                        onAction="#minimizeWindow"/>
+
+                <Button text="🗖"
+                        styleClass="window-button"
+                        onAction="#maximizeWindow"/>
+
+                <Button text="✕"
+                        styleClass="window-button-close"
+                        onAction="#closeWindow"/>
+
+            </HBox>
+
+            <!-- Barra superior -->
+
+            <HBox spacing="12"
+                  alignment="CENTER_LEFT"
+                  styleClass="topbar">
+
+                <padding>
+                    <Insets top="10" right="16" bottom="10" left="16"/>
+                </padding>
+
+                <Label text="Servidor"
+                       styleClass="section-title"/>
+
+                <ComboBox fx:id="serverSelector"
+                          prefWidth="260"
+                          promptText="Selecione um servidor"/>
+
+                <Pane HBox.hgrow="ALWAYS"/>
+
+                <Button text="Atualizar"
+                        onAction="#refreshServerList"
+                        styleClass="primary-button"/>
+
+            </HBox>
+
+        </VBox>
+
     </top>
 
+    <!-- ========================= -->
+    <!-- MENU -->
+    <!-- ========================= -->
+
     <left>
-        <VBox styleClass="sidebar" spacing="8">
-            <Label text="MineHub" styleClass="sidebar-title"/>
+
+        <VBox spacing="8"
+              styleClass="sidebar">
+
+            <padding>
+                <Insets top="18" right="12" bottom="18" left="12"/>
+            </padding>
+
+            <Label text="GERAL"
+                   styleClass="sidebar-section"/>
+
+            <Button text="📁 Arquivos"
+                    styleClass="nav-button"
+                    onAction="#showFiles"/>
+
+            <Button text="💻 Terminal"
+                    styleClass="nav-button"
+                    onAction="#showTerminal"/>
+
+            <Button text="⚙ Configurações"
+                    styleClass="nav-button"
+                    onAction="#showSettings"/>
 
             <Separator/>
 
-            <Button text="Arquivos" onAction="#showFiles" styleClass="nav-button"/>
-            <Button text="Terminal" onAction="#showTerminal" styleClass="nav-button"/>
-            <Button text="Configurações" onAction="#showSettings" styleClass="nav-button"/>
+            <Label text="SERVIDOR"
+                   styleClass="sidebar-section"/>
+
+            <Button text="📦 Plugins"
+                    styleClass="nav-button"/>
+
+            <Button text="🌍 Worlds"
+                    styleClass="nav-button"/>
+
+            <Button text="📋 Logs"
+                    styleClass="nav-button"/>
+
+            <Button text="☁ Backups"
+                    styleClass="nav-button"/>
+
+            <Button text="👤 Jogadores"
+                    styleClass="nav-button"/>
+
+            <Button text="📊 Estatísticas"
+                    styleClass="nav-button"/>
+
+            <Pane VBox.vgrow="ALWAYS"/>
+
+            <Separator/>
+
+            <Label text="MineHub SaaS"
+                   styleClass="muted-text"/>
+
         </VBox>
+
     </left>
 
+    <!-- ========================= -->
+    <!-- CENTRO -->
+    <!-- ========================= -->
+
     <center>
-        <StackPane fx:id="contentArea" styleClass="page"/>
+
+        <StackPane fx:id="contentArea"
+                   styleClass="page"/>
+
     </center>
 
+    <!-- ========================= -->
+    <!-- STATUS -->
+    <!-- ========================= -->
+
     <bottom>
-        <Label fx:id="statusLabel"
-               text="Desconectado"
-               styleClass="status-bar"/>
+
+        <HBox alignment="CENTER_LEFT"
+              spacing="12"
+              styleClass="status-bar">
+
+            <padding>
+                <Insets top="8" right="12" bottom="8" left="12"/>
+            </padding>
+
+            <Label fx:id="statusLabel"
+                   text="Desconectado"/>
+
+            <Pane HBox.hgrow="ALWAYS"/>
+
+            <ProgressBar fx:id="uploadProgress"
+                         prefWidth="220"
+                         progress="0"
+                         visible="false"/>
+
+        </HBox>
+
     </bottom>
 
 </BorderPane>
