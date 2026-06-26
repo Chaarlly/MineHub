@@ -15,6 +15,10 @@ module com.br.minehub.main {
 
     requires com.fasterxml.jackson.databind;
 
+    requires org.fxmisc.richtext;
+
+    requires org.yaml.snakeyaml;
+
     exports com.br.minehub.main;
     exports com.br.minehub.main.model;
 

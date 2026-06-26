@@ -7,6 +7,18 @@
             fx:controller="com.br.minehub.main.MainController"
             styleClass="app-bg">
 
+    <top>
+        <HBox styleClass="topbar" spacing="10">
+            <Pane HBox.hgrow="ALWAYS"/>
+
+            <Label text="Servidor:" styleClass="muted-text"/>
+
+            <ComboBox fx:id="serverSelector"
+                      prefWidth="260"
+                      promptText="Nenhum servidor"/>
+        </HBox>
+    </top>
+
     <left>
         <VBox styleClass="sidebar" spacing="8">
             <Label text="MineHub" styleClass="sidebar-title"/>

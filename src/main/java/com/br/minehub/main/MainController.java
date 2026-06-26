@@ -1,8 +1,10 @@
 package com.br.minehub.main;
 
+import com.br.minehub.main.editor.YamlEditor;
 import com.br.minehub.main.model.RemoteFileItem;
 import com.br.minehub.main.service.SftpService;
 import com.br.minehub.main.service.pterodactyl.PterodactylService;
+import com.br.minehub.main.service.pterodactyl.model.PteroServer;
 import com.br.minehub.main.service.pterodactyl.ws.PteroConsoleWebSocket;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -11,6 +13,7 @@ import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.kordamp.ikonli.fontawesome5.FontAwesomeSolid;
@@ -27,10 +30,30 @@ public class MainController {
     private StackPane contentArea;
 
     @FXML
+    private ComboBox<PteroServer> serverSelector;
+
+    @FXML
     private Label statusLabel;
 
     @FXML
     public void initialize() {
+        serverSelector.setDisable(true);
+
+        serverSelector.setOnAction(e -> {
+            PteroServer server = serverSelector.getValue();
+
+            if (server == null) {
+                return;
+            }
+
+            pteroService.selectServer(server.getIdentifier());
+            currentPath = "/";
+
+            statusLabel.setText("Servidor selecionado: " + server.getName());
+
+            showFiles();
+        });
+
         showFiles();
         statusLabel.setText("MineHub iniciado");
     }
@@ -240,6 +263,7 @@ public class MainController {
 
         VBox box = new VBox(12);
         box.getStyleClass().add("card");
+        box.setMaxHeight(Double.MAX_VALUE);
 
         HBox toolbar = new HBox(10);
         toolbar.setAlignment(Pos.CENTER_LEFT);
@@ -248,16 +272,16 @@ public class MainController {
         backButton.setGraphic(createIcon(FontAwesomeSolid.ARROW_LEFT, "muted-icon"));
 
         Button saveButton = new Button("Salvar");
+        saveButton.getStyleClass().add("primary-button");
         saveButton.setGraphic(createIcon(FontAwesomeSolid.SAVE, "muted-icon"));
 
         Label title = new Label("Editando: " + remotePath);
-        title.setStyle("-fx-font-size:16px; -fx-font-weight:bold;");
+        title.getStyleClass().add("page-title");
 
         toolbar.getChildren().addAll(backButton, saveButton, title);
 
-        TextArea editor = new TextArea();
-        editor.setWrapText(false);
-        editor.setStyle("-fx-font-family: Consolas; -fx-font-size: 13px;");
+        YamlEditor editor = new YamlEditor();
+        VBox.setVgrow(editor, Priority.ALWAYS);
 
         box.getChildren().addAll(toolbar, editor);
         contentArea.getChildren().setAll(box);
@@ -273,6 +297,7 @@ public class MainController {
 
         loadTask.setOnSucceeded(e -> {
             editor.setText(loadTask.getValue());
+            editor.requestEditorFocus();
             statusLabel.setText("Arquivo aberto: " + item.getName());
         });
 
@@ -414,9 +439,6 @@ public class MainController {
         TextField panelUrlField = new TextField("https://panel.urubu.host");
         panelUrlField.setPromptText("URL do painel Pterodactyl");
 
-        TextField serverIdField = new TextField("05449ec1");
-        serverIdField.setPromptText("ID curto do servidor");
-
         PasswordField apiKeyField = new PasswordField();
         apiKeyField.setPromptText("API Key do Pterodactyl");
 
@@ -430,7 +452,6 @@ public class MainController {
             String password = passwordField.getText();
 
             String panelUrl = panelUrlField.getText().trim();
-            String serverId = serverIdField.getText().trim();
             String apiKey = apiKeyField.getText().trim();
 
             if (host.isEmpty() || portText.isEmpty() || user.isEmpty() || password.isEmpty()) {
@@ -438,11 +459,10 @@ public class MainController {
                 return;
             }
 
-            if (panelUrl.isEmpty() || serverId.isEmpty() || apiKey.isEmpty()) {
-                statusLabel.setText("Preencha URL, Server ID e API Key do Pterodactyl.");
+            if (panelUrl.isEmpty() || apiKey.isEmpty()) {
+                statusLabel.setText("Preencha a URL e a API Key do Pterodactyl.");
                 return;
             }
-
             int port;
 
             try {
@@ -452,7 +472,7 @@ public class MainController {
                 return;
             }
 
-            pteroService.configure(panelUrl, apiKey, serverId);
+            pteroService.configure(panelUrl, apiKey, "");
 
             statusLabel.setText("Conectando em " + host + ":" + port + "...");
             connectButton.setDisable(true);
@@ -475,12 +495,37 @@ public class MainController {
             task.setOnSucceeded(event -> {
                 connectButton.setDisable(false);
 
-                if (task.getValue()) {
-                    currentPath = "/";
-                    statusLabel.setText("SFTP e Pterodactyl configurados com sucesso!");
-                    showFiles();
-                } else {
+                if (!task.getValue()) {
                     statusLabel.setText("Falha ao conectar SFTP.");
+                    return;
+                }
+
+                try {
+                    var servers = pteroService.listServers();
+
+                    serverSelector.getItems().setAll(servers);
+
+                    if (servers.isEmpty()) {
+                        statusLabel.setText("Conectado, mas nenhum servidor foi encontrado.");
+                        return;
+                    }
+
+                    serverSelector.getSelectionModel().selectFirst();
+
+                    PteroServer selected = serverSelector.getValue();
+
+                    pteroService.selectServer(selected.getIdentifier());
+                    serverSelector.setDisable(false);
+
+                    currentPath = "/";
+
+                    statusLabel.setText("Conectado. Servidor: " + selected.getName());
+
+                    showFiles();
+
+                } catch (Exception ex) {
+                    statusLabel.setText("Erro ao carregar servidores.");
+                    ex.printStackTrace();
                 }
             });
 
@@ -503,7 +548,6 @@ public class MainController {
                 passwordField,
                 separator,
                 panelUrlField,
-                serverIdField,
                 apiKeyField,
                 connectButton
         );

@@ -240,3 +240,83 @@
     -fx-background-color: #1f2937;
     -fx-text-fill: #ffffff;
 }
+
+.topbar {
+    -fx-background-color: #0f1523;
+    -fx-padding: 12 18;
+    -fx-border-color: #1f2937;
+    -fx-border-width: 0 0 1 0;
+}
+
+/* Editor */
+.yaml-editor {
+    -fx-background-color: #0b1220;
+    -fx-background-radius: 14;
+    -fx-border-color: #243044;
+    -fx-border-radius: 14;
+    -fx-padding: 12;
+}
+
+.yaml-status {
+    -fx-font-size: 12px;
+    -fx-font-weight: 800;
+}
+
+.yaml-ok {
+    -fx-text-fill: #22c55e;
+}
+
+.yaml-error {
+    -fx-text-fill: #ef4444;
+}
+
+.code-area {
+    -fx-background-color: #0b1220;
+    -fx-font-family: "Cascadia Mono", "Consolas";
+    -fx-font-size: 13px;
+}
+
+.code-area .text {
+    -fx-fill: #e5e7eb;
+}
+
+.editor-ok {
+    -fx-border-color: #22c55e;
+    -fx-border-width: 1;
+}
+
+.editor-error {
+    -fx-border-color: #ef4444;
+    -fx-border-width: 2;
+}
+
+.line-error {
+    -rtfx-background-color: rgba(239, 68, 68, 0.22);
+}
+
+.yaml-key {
+    -fx-fill: #38bdf8;
+    -fx-font-weight: bold;
+}
+
+.yaml-string {
+    -fx-fill: #fbbf24;
+}
+
+.yaml-comment {
+    -fx-fill: #64748b;
+}
+
+.yaml-boolean {
+    -fx-fill: #a78bfa;
+    -fx-font-weight: bold;
+}
+
+.yaml-number {
+    -fx-fill: #34d399;
+}
+
+.yaml-list {
+    -fx-fill: #fb7185;
+    -fx-font-weight: bold;
+}
