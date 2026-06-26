@@ -1,69 +1,145 @@
 .root {
     -fx-font-family: "Segoe UI", "Inter", "Arial";
-    -fx-background-color: #0f172a;
+    -fx-background-color: #0b0f19;
 }
 
-/* TOPO */
-.tool-bar {
-    -fx-background-color: #020617;
-    -fx-padding: 10 14;
-    -fx-spacing: 10;
-    -fx-border-color: #1e293b;
+/* Layout */
+.app-bg {
+    -fx-background-color: #0b0f19;
+}
+
+.page {
+    -fx-background-color: #0b0f19;
+    -fx-padding: 24;
+}
+
+.card {
+    -fx-background-color: #111827;
+    -fx-background-radius: 14;
+    -fx-border-color: #1f2937;
+    -fx-border-radius: 14;
+    -fx-border-width: 1;
+    -fx-padding: 20;
+}
+
+.toolbar-clean {
+    -fx-background-color: #0f1523;
+    -fx-padding: 12 16;
+    -fx-spacing: 8;
+    -fx-border-color: #1f2937;
     -fx-border-width: 0 0 1 0;
 }
 
+/* Textos */
 .label {
-    -fx-text-fill: #e5e7eb;
+    -fx-text-fill: #d1d5db;
     -fx-font-size: 13px;
 }
 
-/* BOTÕES */
+.page-title {
+    -fx-text-fill: #f9fafb;
+    -fx-font-size: 22px;
+    -fx-font-weight: 800;
+}
+
+.section-title {
+    -fx-text-fill: #f3f4f6;
+    -fx-font-size: 16px;
+    -fx-font-weight: 700;
+}
+
+.muted-text {
+    -fx-text-fill: #9ca3af;
+}
+
+/* Botões */
 .button {
-    -fx-background-color: transparent;
-    -fx-text-fill: #94a3b8;
+    -fx-background-color: #1f2937;
+    -fx-text-fill: #e5e7eb;
     -fx-font-size: 13px;
     -fx-font-weight: 600;
-    -fx-padding: 8 14;
-    -fx-background-radius: 10;
+    -fx-padding: 9 14;
+    -fx-background-radius: 8;
     -fx-cursor: hand;
 }
 
 .button:hover {
-    -fx-background-color: #1e293b;
-    -fx-text-fill: #f8fafc;
+    -fx-background-color: #374151;
 }
 
-.button:pressed {
-    -fx-background-color: #334155;
+.primary-button {
+    -fx-background-color: #2563eb;
+    -fx-text-fill: white;
 }
 
-/* ÁREA CENTRAL */
-.stack-pane {
-    -fx-background-color: #0f172a;
-    -fx-padding: 18;
+.primary-button:hover {
+    -fx-background-color: #1d4ed8;
 }
 
-/* CARDS */
-.card {
-    -fx-background-color: #111827;
-    -fx-background-radius: 18;
-    -fx-border-color: #1f2937;
-    -fx-border-radius: 18;
-    -fx-padding: 18;
+.danger-button {
+    -fx-background-color: #dc2626;
+    -fx-text-fill: white;
 }
 
-/* TABELA */
+.danger-button:hover {
+    -fx-background-color: #b91c1c;
+}
+
+.success-button {
+    -fx-background-color: #16a34a;
+    -fx-text-fill: white;
+}
+
+.success-button:hover {
+    -fx-background-color: #15803d;
+}
+
+/* Inputs */
+.text-field,
+.password-field {
+    -fx-background-color: #0b1220;
+    -fx-text-fill: #f9fafb;
+    -fx-prompt-text-fill: #6b7280;
+    -fx-background-radius: 8;
+    -fx-border-color: #243044;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+    -fx-padding: 10 12;
+}
+
+.text-field:focused,
+.password-field:focused {
+    -fx-border-color: #2563eb;
+}
+
+/* Console / editor */
+.text-area {
+    -fx-background-color: #0b1220;
+    -fx-text-fill: #d1fae5;
+    -fx-font-family: "Cascadia Mono", "Consolas";
+    -fx-font-size: 13px;
+    -fx-background-radius: 10;
+    -fx-border-color: #243044;
+    -fx-border-radius: 10;
+}
+
+.text-area .content {
+    -fx-background-color: #0b1220;
+    -fx-background-radius: 10;
+}
+
+/* Tabela */
 .table-view {
     -fx-background-color: #111827;
-    -fx-background-radius: 16;
+    -fx-background-radius: 12;
     -fx-border-color: #1f2937;
-    -fx-border-radius: 16;
-    -fx-padding: 8;
+    -fx-border-radius: 12;
+    -fx-padding: 4;
 }
 
 .table-view .column-header-background {
-    -fx-background-color: #020617;
-    -fx-background-radius: 12 12 0 0;
+    -fx-background-color: #0b1220;
+    -fx-background-radius: 8 8 0 0;
 }
 
 .table-view .column-header,
@@ -73,7 +149,7 @@
 }
 
 .table-view .column-header .label {
-    -fx-text-fill: #94a3b8;
+    -fx-text-fill: #9ca3af;
     -fx-font-size: 12px;
     -fx-font-weight: 700;
 }
@@ -81,148 +157,86 @@
 .table-row-cell {
     -fx-background-color: transparent;
     -fx-border-color: transparent;
-    -fx-padding: 6;
 }
 
 .table-row-cell:hover {
-    -fx-background-color: #1e293b;
-    -fx-background-radius: 10;
+    -fx-background-color: #1f2937;
 }
 
 .table-row-cell:selected {
     -fx-background-color: #2563eb;
-    -fx-background-radius: 10;
 }
 
 .table-cell {
     -fx-text-fill: #e5e7eb;
     -fx-border-color: transparent;
-    -fx-padding: 10;
-}
-
-/* TREE VIEW */
-.tree-view {
-    -fx-background-color: #111827;
-    -fx-background-radius: 16;
-    -fx-border-color: #1f2937;
-    -fx-border-radius: 16;
-    -fx-padding: 8;
-}
-
-.tree-cell {
-    -fx-background-color: transparent;
-    -fx-text-fill: #cbd5e1;
-    -fx-padding: 8;
-    -fx-background-radius: 10;
-}
-
-.tree-cell:hover {
-    -fx-background-color: #1e293b;
-    -fx-text-fill: white;
-}
-
-.tree-cell:selected {
-    -fx-background-color: #2563eb;
-    -fx-text-fill: white;
-}
-
-/* SPLITPANE */
-.split-pane {
-    -fx-background-color: transparent;
-}
-
-.split-pane-divider {
-    -fx-background-color: #1e293b;
-    -fx-padding: 1;
-}
-
-/* TEXTAREA CONSOLE */
-.text-area {
-    -fx-background-color: #020617;
-    -fx-text-fill: #22c55e;
-    -fx-font-family: "Consolas";
-    -fx-font-size: 13px;
-    -fx-background-radius: 16;
-    -fx-border-color: #1f2937;
-    -fx-border-radius: 16;
-}
-
-.text-area .content {
-    -fx-background-color: #020617;
-}
-
-/* CAMPOS */
-.text-field, .password-field {
-    -fx-background-color: #020617;
-    -fx-text-fill: #f8fafc;
-    -fx-prompt-text-fill: #64748b;
-    -fx-background-radius: 10;
-    -fx-border-color: #1e293b;
-    -fx-border-radius: 10;
     -fx-padding: 9 12;
 }
 
-/* BARRA INFERIOR */
+/* Status */
 .status-bar {
-    -fx-background-color: #020617;
-    -fx-border-color: #1e293b;
+    -fx-background-color: #0f1523;
+    -fx-border-color: #1f2937;
     -fx-border-width: 1 0 0 0;
     -fx-padding: 8 14;
+    -fx-text-fill: #9ca3af;
 }
 
-.separator .line {
-    -fx-border-color: #334155;
-}
-
-.file-icon {
-    -fx-text-fill: #60a5fa;
-    -fx-font-size: 15px;
-    -fx-font-weight: bold;
-    -fx-min-width: 24px;
-}
-
-.file-name {
-    -fx-text-fill: #e5e7eb;
-    -fx-font-size: 13px;
-}
-
-.folder-icon {
-    -fx-icon-color: #facc15;
-}
-
-.jar-icon {
-    -fx-icon-color: #a78bfa;
-}
-
-.config-icon {
-    -fx-icon-color: #38bdf8;
-}
-
-.json-icon {
-    -fx-icon-color: #22c55e;
-}
-
-.properties-icon {
-    -fx-icon-color: #fb923c;
-}
-
-.text-icon {
-    -fx-icon-color: #94a3b8;
-}
-
-.archive-icon {
-    -fx-icon-color: #f97316;
-}
-
-.file-icon {
-    -fx-icon-color: #cbd5e1;
-}
-
-.muted-icon {
-    -fx-icon-color: #cbd5e1;
-}
+/* Ícones */
+.folder-icon { -fx-icon-color: #eab308; }
+.jar-icon { -fx-icon-color: #8b5cf6; }
+.config-icon { -fx-icon-color: #06b6d4; }
+.json-icon { -fx-icon-color: #22c55e; }
+.properties-icon { -fx-icon-color: #f97316; }
+.text-icon { -fx-icon-color: #94a3b8; }
+.archive-icon { -fx-icon-color: #f59e0b; }
+.file-icon { -fx-icon-color: #cbd5e1; }
+.muted-icon { -fx-icon-color: #9ca3af; }
 
 .file-name {
     -fx-text-fill: #e5e7eb;
     -fx-font-size: 13px;
+}
+
+/* Scroll */
+.scroll-bar,
+.scroll-bar .track {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: #374151;
+    -fx-background-radius: 999;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: #4b5563;
+}
+
+/* Sidebar */
+.sidebar {
+    -fx-background-color: #0f1523;
+    -fx-padding: 18;
+    -fx-pref-width: 220;
+    -fx-border-color: #1f2937;
+    -fx-border-width: 0 1 0 0;
+}
+
+.sidebar-title {
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 18px;
+    -fx-font-weight: 800;
+    -fx-padding: 0 0 12 0;
+}
+
+.nav-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #9ca3af;
+    -fx-alignment: CENTER_LEFT;
+    -fx-pref-width: 180;
+}
+
+.nav-button:hover {
+    -fx-background-color: #1f2937;
+    -fx-text-fill: #ffffff;
 }
