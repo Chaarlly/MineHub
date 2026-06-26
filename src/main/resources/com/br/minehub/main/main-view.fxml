@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.br.minehub.main.MainController">
+
+    <top>
+        <ToolBar>
+            <Label text="MineHub"/>
+            <Separator/>
+            <Button text="Arquivos" onAction="#showFiles"/>
+            <Button text="Console" onAction="#showConsole"/>
+            <Button text="Servidor" onAction="#showServer"/>
+            <Button text="Configurações" onAction="#showSettings"/>
+        </ToolBar>
+    </top>
+
+    <center>
+        <StackPane fx:id="contentArea"/>
+    </center>
+
+    <bottom>
+        <Label fx:id="statusLabel" text="Desconectado" style="-fx-padding: 8;" styleClass="status-bar"/>
+    </bottom>
+
+</BorderPane>
