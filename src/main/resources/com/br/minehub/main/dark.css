@@ -248,18 +248,23 @@
     -fx-border-width: 0 0 1 0;
 }
 
-/* Editor */
+/* =========================
+   EDITOR YAML PROFISSIONAL
+   ========================= */
+
 .yaml-editor {
     -fx-background-color: #0b1220;
     -fx-background-radius: 14;
     -fx-border-color: #243044;
     -fx-border-radius: 14;
+    -fx-border-width: 1;
     -fx-padding: 12;
 }
 
 .yaml-status {
     -fx-font-size: 12px;
     -fx-font-weight: 800;
+    -fx-padding: 0 0 6 0;
 }
 
 .yaml-ok {
@@ -270,30 +275,54 @@
     -fx-text-fill: #ef4444;
 }
 
+/* Editor */
 .code-area {
     -fx-background-color: #0b1220;
     -fx-font-family: "Cascadia Mono", "Consolas";
     -fx-font-size: 13px;
+    -fx-border-color: transparent;
+    -fx-background-radius: 10;
+}
+
+/* Fundo real do RichTextFX */
+.code-area .paragraph-box {
+    -fx-background-color: #0b1220;
 }
 
 .code-area .text {
     -fx-fill: #e5e7eb;
 }
 
-.editor-ok {
-    -fx-border-color: #22c55e;
-    -fx-border-width: 1;
+/* Números das linhas */
+.lineno {
+    -fx-background-color: #111827;
+    -fx-text-fill: #64748b;
+    -fx-padding: 0 10 0 10;
+    -fx-font-family: "Cascadia Mono", "Consolas";
+    -fx-font-size: 12px;
+    -fx-border-color: #1f2937;
+    -fx-border-width: 0 1 0 0;
 }
 
-.editor-error {
-    -fx-border-color: #ef4444;
-    -fx-border-width: 2;
-}
-
+/* Linha com erro */
 .line-error {
     -rtfx-background-color: rgba(239, 68, 68, 0.22);
 }
 
+/* Estado com erro */
+.editor-error {
+    -fx-border-color: #ef4444;
+    -fx-border-width: 2;
+    -fx-border-radius: 10;
+}
+
+/* Remove aquele verde gigante */
+.editor-ok {
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+}
+
+/* Syntax highlight */
 .yaml-key {
     -fx-fill: #38bdf8;
     -fx-font-weight: bold;
