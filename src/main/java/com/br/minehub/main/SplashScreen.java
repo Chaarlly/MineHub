@@ -135,9 +135,8 @@ public class SplashScreen {
 
             fadeOut.setOnFinished(ev -> {
                 splashStage.close();
-                onFinish.run();
             });
-
+            onFinish.run();
             fadeOut.play();
         });
 
