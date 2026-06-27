@@ -19,25 +19,38 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+
         Stage splashStage = new Stage();
 
-        SplashScreen.show(splashStage, () -> Platform.runLater(() -> openMainWindow(primaryStage)));
+        SplashScreen.show(splashStage, () ->
+                Platform.runLater(() -> openMainWindow(primaryStage))
+        );
     }
 
     private void openMainWindow(Stage stage) {
         try {
-            FXMLLoader loader = new FXMLLoader(Main.class.getResource("main-view.fxml"));
+
+            FXMLLoader loader = new FXMLLoader(
+                    Main.class.getResource("main-view.fxml")
+            );
 
             Parent root = loader.load();
-            root.setStyle("-fx-background-color: #0b0f19;");
+
+            root.setStyle("-fx-background-color:#0b0f19;");
 
             Scene scene = new Scene(root, 1100, 650);
             scene.setFill(Color.web("#0b0f19"));
-            scene.getStylesheets().add(Main.class.getResource("dark.css").toExternalForm());
+            scene.getStylesheets().add(
+                    Main.class.getResource("dark.css").toExternalForm()
+            );
 
             stage.initStyle(StageStyle.UNDECORATED);
-            stage.getIcons().add(new Image(Main.class.getResourceAsStream("assets/logo.png")));
             stage.setTitle("MineHub");
+
+            stage.getIcons().add(
+                    new Image(Main.class.getResourceAsStream("assets/logo.png"))
+            );
+
             stage.setScene(scene);
             stage.centerOnScreen();
 
@@ -49,8 +62,10 @@ public class Main extends Application {
             fade.setToValue(1);
 
             Timeline opacity = new Timeline(
-                    new KeyFrame(Duration.ZERO, new KeyValue(stage.opacityProperty(), 0)),
-                    new KeyFrame(Duration.millis(350), new KeyValue(stage.opacityProperty(), 1))
+                    new KeyFrame(Duration.ZERO,
+                            new KeyValue(stage.opacityProperty(), 0)),
+                    new KeyFrame(Duration.millis(350),
+                            new KeyValue(stage.opacityProperty(), 1))
             );
 
             fade.play();
@@ -59,9 +74,5 @@ public class Main extends Application {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    public static void main(String[] args) {
-        launch();
     }
 }
